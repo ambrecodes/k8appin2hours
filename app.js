@@ -8,7 +8,7 @@ const app = express();
 // The callback function receives two parameters: 'req' (request) and 'res' (response)
 app.get('/', (req, res) => {
   // When a GET request is made to '/', the server responds with the message 'Hello, Kubernetes!'
-  res.send('Hello, Kubernetes!');
+  res.send('Hello friend, I love you!');
 });
 
 // Start the server on port 3000
