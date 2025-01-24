@@ -12,51 +12,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Set up Docker Buildx (for multi-platform support)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # Cache node modules (optional for faster builds)
-      - name: Cache Node Modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      - name: Build Docker image
+        run: docker build -t registry.render.com/${{ github.repository }}/k8s-app:latest .
 
-      # Build Docker image
-      - name: Build Docker Image
-        run: docker build -t k8s-app .
-
-      # Run tests in the container
-      - name: Run Tests
+      - name: Log into Render Registry
         run: |
-          docker run --rm k8s-app npm test
+          echo ${{ secrets.RENDER_API_TOKEN }} | docker login --username ${{ github.actor }} --password-stdin registry.render.com
 
-      # Log into Docker Hub (or use another registry)
-      - name: Log into Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Push Docker image to Docker Hub (optional)
-      - name: Push Docker image
-        run: |
-          docker tag k8s-app yourusername/k8s-app:latest
-          docker push yourusername/k8s-app:latest
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to Fly.io
-        uses: superfly/flyctl-actions/deploy@v1
-        with:
-          fly_api_token: ${{ secrets.FLY_API_TOKEN }}
-          app_name: your-fly-app-name
+      - name: Push Docker image to Render Registry
+        run: docker push registry.render.com/${{ github.repository }}/k8s-app:latest
